@@ -10,14 +10,19 @@ import os
 import pdfminer.high_level
 import pdfminer.layout
 import pickle
+import sys
 
 pdfminer.settings.STRICT = False
-
 url = 'https://ucpd.berkeley.edu/services/lost-and-found'
 url_request = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-gmail_user = input("Bot Email: ")
-gmail_pwd  = input("Bot Pass: ")
-user_email = input("Your email: ")
+if len(sys.argv) < 4:
+    gmail_user = input("Bot Email: ")
+    gmail_pwd  = input("Bot Pass: ")
+    user_email = input("Your email: ")
+else:
+    gmail_user = sys.argv[1]
+    gmail_pwd  = sys.argv[2]
+    user_email = sys.argv[3]
 FROM = "Lost and Found Bot"
 
 resources_path = os.path.join(os.path.dirname(__file__), 'resources/')
