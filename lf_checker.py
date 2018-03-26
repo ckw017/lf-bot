@@ -48,7 +48,7 @@ def get_pdf_link():
         html = urlopen(url_request).read()
         soup = bsoup(html, 'html.parser')
         soup.prettify()
-        targetDiv = soup.findAll("div", class_ = "field-item even")[0].findAll("p")[7]
+        targetDiv = soup.findAll("div", class_ = "field-item even")[7].findAll("p")[7]
         return targetDiv.a.get("href")
     except:
         print("An error occurred while attempting to receive the pdf url.")
