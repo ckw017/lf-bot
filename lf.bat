@@ -1,1 +1,0 @@
-python lf_checker.py lostandfoundbot@gmail.com hahano
