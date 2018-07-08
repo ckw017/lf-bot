@@ -25,7 +25,7 @@ url_request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
 if len(sys.argv) < 4:
 	gmail_user = input("Bot Email: ")
 	gmail_pwd  = input("Bot Password: ")
-	user_email = input("Your email: ")
+	user_email = input("Recipient email: ")
 else:
 	gmail_user = sys.argv[1]
 	gmail_pwd  = sys.argv[2]
@@ -128,6 +128,19 @@ def parse_text(text):
 			"custody": custody, "info": additional_info})
 	return items
 
+def count_types(items):
+	counts = {}
+	for item in items:
+		type = sanitize(item["type"])
+		if type in counts:
+			counts[type] += 1
+		else:
+			counts[type] = 1
+	return counts
+
+def sanitize(string):
+	return string.replace('.', '')
+	
 ''' ' ' ' ' ' '
 ' Comparisons '
 ' ' ' ' ' ' '''
@@ -145,9 +158,12 @@ def get_descriptions(items):
 
 def update_items(pdf_link, items):
 	update_time = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+	history_time = datetime.now().strftime("%m%d%Y")
 	meta_data = {"time": update_time, "pdf": pdf_link}
-	data = {"items": items, "meta": meta_data}
-	db.remove(user["idToken"])
+	history_data = {history_time: count_types(items)}
+	print(history_data)
+	data = {"items": items, "meta": meta_data, "history": history_data}
+	db.child("items").remove(user["idToken"])
 	db.update(data, user["idToken"])
 	
 def query(data_path):
