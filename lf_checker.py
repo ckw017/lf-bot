@@ -10,6 +10,7 @@ import pdfminer.high_level
 import pdfminer.layout
 import sys
 import pyrebase
+import traceback
 
 ''' ' ' ' ' ' ' ' '
 ' Configurations  '
@@ -81,6 +82,7 @@ def get_pdf_link():
 		target_div = soup.findAll("div", class_ = "field-item even")[7].findAll("p")[7]
 		return target_div.a.get("href")
 	except:
+		traceback.print_exc()
 		print("An error occurred while attempting to receive the pdf url.")
 		return ""
 
@@ -162,13 +164,16 @@ def update_items(pdf_link, items):
 	meta_data = {"time": update_time, "pdf": pdf_link}
 	history_data = {history_time: count_types(items)}
 	print(history_data)
-	data = {"items": items, "meta": meta_data, "history": history_data}
-	db.child("items").remove(user["idToken"])
-	db.update(data, user["idToken"])
+	data = {"items": items, "meta": meta_data}
+	db.child("items").remove(get_token())
+	db.update(data, get_token())
+	db.child("history").update(history_data, get_token())
 	
 def query(data_path):
-	user = firebase.auth().sign_in_with_email_and_password(gmail_user, gmail_pwd) #Renew Auth Token
-	return db.child(data_path).get(user["idToken"]).val()
+	return db.child(data_path).get(get_token()).val()
+
+def get_token():
+	return firebase.auth().refresh(user['refreshToken'])["idToken"]
 
 ''' ' ' '
 ' Main  '
@@ -176,10 +181,10 @@ def query(data_path):
 if __name__ == "__main__":
 	while True:
 		current_link = get_pdf_link()
-		if current_link == query("meta/pdf"):
+		if current_link == query("meta/pdf") or not current_link:
 			print("No updates have been detected.")
 			update_time = datetime.now().strftime("%B %d, %Y at %I:%M %p")
-			db.child("meta").update({"time": update_time}, user["idToken"])
+			db.child("meta").update({"time": update_time}, get_token())
 			print(str(datetime.now())[0:19])
 			time.sleep(300)
 		else:
