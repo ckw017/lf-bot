@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="https://ucpd.berkeley.edu/profiles/openberkeley/themes/openberkeley_theme_brand/favicon.ico">
+    <title>Lost and Found | UC Berkeley</title>
+    <style>
+        html * {
+        			font-family:"Roboto", "Helvetica", "Arial", sans-serif;
+					font-size: 1.2vw;
+        		}
+        		
+        		h1 {
+        			font-size: 5vw;
+        			text-align: center;
+        			line-height: 0px;
+        		}
+				
+				#metadata {
+					font-size: 2vw;
+				}
+        		
+        		div.options {
+        			font-size: 0px;
+        			width: 80%;
+                    margin-left: 10%;
+                    margin-right: 10%;
+        			padding-bottom: 1vw;
+        		}
+        		
+        		img.option-icon {
+        			max-height: 100%;
+        			max-width: 100%;
+        		}
+        		
+        		button.filter-button {
+					padding: .4vw;
+        			background-color: #def1fc;
+        			border: none;
+        			margin-right: .5%;
+        			width: 5%;
+        			height: auto;
+        			border-radius: 2px;
+        			cursor: pointer;
+        			margin-top: 1vw;
+        			margin-bottom: 1vw;
+        		}
+        
+        		button.filter-button:hover {
+        			background-color: #83c8ef;
+        			margin-left: -.1%;
+        			margin-right: .4%;
+        			height: auto;
+        			width: 5.2%;
+        			margin-top: 0px;
+        			margin-bottom: 0px;
+        			border-radius: 2px;
+        		}
+        		
+        		button.filter-button-active {
+					padding: .4vw;
+        			background-color: #4298f4;
+        			border: none;
+        			margin-left: -.1%;
+        			margin-right: .4%;
+        			height: auto;
+        			width: 5.2%;
+        			margin-top: 0px;
+        			margin-bottom: 0px;
+        			border-radius: 2px;
+        		}
+        
+        		input.table-search {
+        			float: right;
+        			text-align: left;
+        			font-size: 1.5vw;
+        			width: 22%;
+        			margin-top: 1vw;
+        			padding: 1.2vw;
+        			margin-right: .2vw;
+        		}
+        		
+                table {
+        			border-spacing: 0;
+                    table-layout: fixed;
+                    border-collapse: collapse;
+                    margin-left: 10%;
+                    margin-right: 10%;
+        			width: 80%;
+        			border: 1px solid #ddd;
+        		}
+        
+        		th, td {
+        			text-align: left;
+        			padding: .6vw;
+        		}
+        		
+        		thead {
+        			font-weight: bold;
+        			background-color: #e2e2e2;
+        		}
+        
+        		tr:nth-child(even) {
+        			background-color: #f2f2f2;
+        		}
+        		
+        		tr:hover, thead:hover {
+        			background-color: #def1fc;
+        		}
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script>
+    <script>
+        // Initialize Firebase
+        	  var config = {
+        		apiKey: "AIzaSyB-V1qWhNViHSnL7nyrK2WVyH2wmWF8338",
+        		authDomain: "berkeley-lost-and-found.firebaseapp.com",
+        		databaseURL: "https://berkeley-lost-and-found.firebaseio.com",
+        		projectId: "berkeley-lost-and-found",
+        		storageBucket: "berkeley-lost-and-found.appspot.com",
+        		messagingSenderId: "454542259965"
+        	  };
+        	  firebase.initializeApp(config);
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase-database.js"></script>
+
+    <script type="text/javascript">
+        Object.values = Object.values || (obj => Object.keys(obj).map(key => obj[key])); //shim for Object.values
+                function initApp() {
+                    var ref = firebase.database().ref();
+                    ref.once("value")
+                        .then(function(snapshot) {
+                            data = snapshot.child("items").val();
+        					if(data) {
+        						var tbl = buildTable(data);
+        						initButtons(tbl);
+        						initInput(tbl);
+        					}
+                        });
+        			ref.child("meta")
+        				.on("value", function(snapshot) {
+        					setMeta(snapshot.val());
+        				}
+        			)
+        			ref.child("items")
+        				.on("value", function(snapshot) {
+        					var data = snapshot.val();
+        					if(data) {
+        						var tbl = buildTable(data);
+        					}
+        				}
+        			)
+                }
+        		//var keys = ["type", "desc", "custody", "info"];
+        		var keys = ["type", "desc", "custody"];
+        		//var columns = ["Type", "Description", "Custody", "Additional Info"];
+        		var columns = ["Type", "Description", "Custody"];
+        		var colSpans = [2, 5, 3];
+        		var tablespan = 10;
+        		
+        		function buildTable(data) {
+        			var tbl = document.createElement("table");
+        			tbl.setAttribute("id", "item-table")
+        			createHeader(tbl);
+        			for(var i = 0; i < data.length; i++) {
+        				buildRow(tbl, data, i);
+        			}
+        			var table_div = document.getElementById("table");
+        			table_div.innerHTML = "";
+        			table_div.appendChild(tbl);
+        			return tbl;
+        		}
+        		
+        		function buildRow(tbl, data, row) {
+        			var item = data[row];
+        			var tr = tbl.insertRow();
+        			for(var j = 0; j < keys.length; j++) {
+        				var td = document.createElement("td");
+        				td.colSpan = colSpans[j];
+        				var key = keys[j];
+        				if(key in item) {
+        					if(key === "info") {
+        						var info = item[key];
+        						for(var k = 0; k < info.length; k++) {
+        							if(k != 0) {
+        								td.innerHTML += "<br>";
+        							}
+        							td.innerHTML += info[k];
+        						}
+        					} else {
+        						td.innerHTML = item[key];
+        					}
+        				}
+        				tr.appendChild(td);
+        			}
+        		}
+        		
+        		function createHeader(tbl) {
+        			var thead = document.createElement("thead");
+        			for (var i = 0; i < columns.length; i++) {
+                        var th = document.createElement("th");
+        				th.colSpan = colSpans[i];
+                        th.innerHTML = columns[i];
+                        thead.appendChild(th);
+                    }
+        			tbl.appendChild(thead);
+        		}
+        		
+        		var active_button = null;
+        		function initButtons(tbl) {
+        			var buttons = document.getElementsByClassName("filter-button");
+        			for(var i = 0; i < buttons.length; i++) {
+        				var btn = buttons[i];
+        				btn.onclick = filterFunc(btn, tbl);
+        			}
+        		}
+        		
+        		//Returns a filter function for the given button
+        		function filterFunc(btn, tbl) {
+        			return () => {
+        				var title = btn.getAttribute("title");
+        				if(active_button != btn) {
+        					filter(tbl, title, 0);
+        					if(active_button) {
+        						active_button.setAttribute("class", "filter-button");
+        					}
+        					btn.setAttribute("class", "filter-button-active");
+        					active_button = btn;
+        				} else {
+        					unfilter(tbl);
+        					btn.setAttribute("class", "filter-button");
+        					active_button = null;
+        				}
+        				if(search_bar && search_bar.value != "") {
+        					search_bar.onkeyup();
+        				}
+        			}
+        		}
+        		
+        		var search_bar = null;
+        		function initInput(tbl) {
+        			search_bar = document.getElementById("search-bar");
+        			search_bar.onkeyup = () => {
+        				var val = search_bar.value;
+        				if(val == "") {
+        					unfilter(tbl);
+        					filterBtn(tbl, active_button);
+        				} else {
+        					filter(tbl, val, 1);
+        					filterBtn(tbl, active_button);
+        				}
+        			}
+        		}
+        		
+        		function filterBtn(tbl, btn) {
+        			if(btn) {
+        				filter(tbl, btn.getAttribute("title"), 0, false);
+        			}
+        		}
+        		
+        		function filter(tbl, keyword, col, all = true) {
+        			keyword = keyword.toUpperCase();
+        			strings = keyword.split(" ");
+        			if(tbl) {
+        				var rows = tbl.getElementsByTagName("tr");
+        				for(var r = 0; r < rows.length; r++) {
+        					var cell = rows[r].getElementsByTagName("td")[col];
+        					if(cell && hasStrings(cell, strings)) {
+        						if(all || !(rows[r].style.display === "none")) {
+        							rows[r].style.display = "";
+        						}
+        					} else if (cell) {
+        						rows[r].style.display = "none";
+        					}
+        				}
+        			}
+        		}
+        		
+        		function hasStrings(cell, strings) {
+        			var cell_text = cell.innerHTML.toUpperCase();
+        			for(var i = 0; i < strings.length; i++) {
+        				if(strings[i] && !hasString(cell_text, strings[i])) {
+        					return false;
+        				}
+        			}
+        			return true;
+        		}
+        		
+        		function hasString(cell_text, str, reject = false) {
+        			var index = cell_text.indexOf(str);
+        			if(index > -1) {
+        				if(index == 0 || cell_text.charAt(index - 1) == ' ') {
+        					return true;
+        				}
+        				return hasString(cell_text.substring(index + 1), str, true);
+        			}
+        			return false;
+        		}
+        		
+        		function unfilter(tbl) {
+        			var rows = tbl.getElementsByTagName("tr");
+        			for(var r = 0; r < rows.length; r++) {
+        				rows[r].style.display = "";
+        			}
+        		}
+        		
+        		function setMeta(metadata) {
+        			var meta_container = document.getElementById("metadata");
+        			var pdf_link = document.getElementById("pdf-link");
+        			pdf_link.setAttribute("href", metadata["pdf"]);
+        			document.getElementById("last-update").innerHTML = " | Last checked: " + metadata["time"];
+        			
+        		}
+        
+                window.onload = function() {
+                    initApp();
+                };
+    </script>
+</head>
+
+<body>
+    <h1> Berkeley Lost and Found </h1>
+    <center id="metadata"><a id="pdf-link">Official PDF</a><span id="last-update"></span></center><br>
+    <div class="options">
+        <button class="filter-button" title="Backpack"><img class="option-icon" src = "https://i.imgur.com/2G5moNZ.png"></button>
+        <button class="filter-button" title="Cellular Telephone"><img class="option-icon" src = "https://i.imgur.com/8gLEexV.png"></button>
+        <button class="filter-button" title="Electronic Device"><img class="option-icon" src = "https://i.imgur.com/Ft3aSyl.png"></button>
+        <button class="filter-button" title="Camera"><img class="option-icon" src = "https://i.imgur.com/P2xtYYK.png"></button>
+        <button class="filter-button" title="Computer Accessories"><img class="option-icon" src = "https://i.imgur.com/Qc7F2oB.png"></button>
+        <button class="filter-button" title="Glasses"><img class="option-icon" src = "https://i.imgur.com/Z4ZSiP8.png"></button>
+        <button class="filter-button" title="Other item(s)"><img class="option-icon" src = "https://i.imgur.com/3lm391f.png"></button>
+        <button class="filter-button" title="I.D. Card"><img class="option-icon" src = "https://i.imgur.com/wxiMO7a.png"></button>
+        <button class="filter-button" title="Jewelry"><img class="option-icon" src = "https://i.imgur.com/5qGG0YJ.png"></button>
+        <button class="filter-button" title="Credit Card"><img class="option-icon" src = "https://i.imgur.com/BeK7gC0.png"></button>
+        <button class="filter-button" title="Wallet"><img class="option-icon" src = "https://i.imgur.com/BSyzeLF.png"></button>
+        <button class="filter-button" title="Purse"><img class="option-icon" src = "https://i.imgur.com/v1PmdWC.png"></button>
+        <button class="filter-button" title="Drivers License"><img class="option-icon" src = "https://i.imgur.com/WR6HE76.png"></button>
+        <input type="text" id="search-bar" class="table-search" placeholder="Search descriptions...">
+    </div>
+    <div id="table"></div>
+</body>
+
+</html>
