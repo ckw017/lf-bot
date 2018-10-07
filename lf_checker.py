@@ -79,7 +79,7 @@ def get_pdf_link():
 		html = urlopen(url_request).read()
 		soup = bsoup(html, "html.parser")
 		soup.prettify()
-		target_div = soup.findAll("div", class_ = "field-item even")[7].findAll("p")[7]
+		target_div = soup.findAll("div", class_ = "field-item even")[0].findAll("p")[7]
 		return target_div.a.get("href")
 	except:
 		traceback.print_exc()
